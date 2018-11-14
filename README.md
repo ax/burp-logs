@@ -13,6 +13,6 @@ Whit this simple extension you will be able to load Burp log files into Burp and
 `mkdir bin build`
 - Build the Logs jar.
 `javac -d build/ src/burp/*.java`
-`jar cf bin/Logs.jar -C build/ burp
+`jar cf bin/Logs.jar -C build/ burp`
 - Load your `bin/Logs.jar` into Burp.
 
