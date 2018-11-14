@@ -1,4 +1,4 @@
-#Logs
+# Logs
 
 Logs is a BurpSuite extension to work with log files.
 
