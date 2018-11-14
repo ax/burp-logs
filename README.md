@@ -1,4 +1,5 @@
 #Logs
+
 Logs is a BurpSuite extension to work with log files.
 
 Under Project Options > Misc > Logging, there are options to log every HTTP request and response made and received by BurpSuite. Logging can be configured per-tool or for all Burp traffic. This can be useful to keep complete records of your Burp session.
