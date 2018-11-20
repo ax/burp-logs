@@ -26,8 +26,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.File;
 
-public class BurpExtender implements IBurpExtender, ITab, IMessageEditorController
-{
+public class BurpExtender implements IBurpExtender, ITab, IMessageEditorController{
     private IBurpExtenderCallbacks callbacks;
     private IExtensionHelpers helpers;
     
@@ -37,6 +36,8 @@ public class BurpExtender implements IBurpExtender, ITab, IMessageEditorControll
     
     private final JPanel borderPanel = new JPanel();
     private final ArrayList<BurpHttpMessage> messages = new ArrayList<>();
+	private static final String name = "Logs";
+	private static final String version = "0.0";
 
     
     //
@@ -50,7 +51,7 @@ public class BurpExtender implements IBurpExtender, ITab, IMessageEditorControll
         // obtain an extension helpers object
         helpers = callbacks.getHelpers();
         
-        callbacks.setExtensionName("Logs");
+        callbacks.setExtensionName(name);
                
         // obtain our output and error streams
         final PrintWriter stdout = new PrintWriter(callbacks.getStdout(), true);
@@ -61,7 +62,7 @@ public class BurpExtender implements IBurpExtender, ITab, IMessageEditorControll
             
             @Override
             public void run(){
-                final LogTableModel dataModel = new LogTableModel();
+                final LogTableModel dataModel = new LogTableModel(messages);
 
                 JButton loadButton = new JButton("Load ...");
                 loadButton.setPreferredSize(new Dimension(100, 30));
@@ -70,90 +71,13 @@ public class BurpExtender implements IBurpExtender, ITab, IMessageEditorControll
                     public void actionPerformed(ActionEvent e) {
                         int returnVal = fileDialog.showOpenDialog(borderPanel);
                         if (returnVal == JFileChooser.APPROVE_OPTION) {
-                            File file = fileDialog.getSelectedFile();
-                            try{
-                                BufferedReader reader = new BufferedReader(new FileReader(file));
-                                Scanner sc = new Scanner(reader);
-                                // ISOLATE EACH HTTP MESSAGE
-                                sc.useDelimiter("======================================================\r\n\r\n\r\n\r\n");                                                      
-                                int n = 0;
-                                // PARSE THE HTTP MESSAGE
-                                while (sc.hasNext()) {
-                                    stdout.println("|============[ HTTP MESSAGE ("+n+") ]============|");
-                                    String http_message = sc.next();
-                                    BurpHttpMessage HRR = new BurpHttpMessage(); 
-                                    //
-                                    // http_message MUST be in the following format:
-                                    //
-                                    // ======================================================
-                                    // 22:27:52  https://bla.blabla.org:443  [127.0.0.1]
-                                    // ======================================================
-                                    // REQUEST  
-                                    // ======================================================
-                                    // RESPONSE (optional)
-                                    // ======================================================\r\n\r\n\r\n\r\n
-                                    //
-                                    Scanner scanner = new Scanner(http_message);
-                                    scanner.useDelimiter("======================================================\r\n");
-                                    String http_msg_header = scanner.next();
-                                    String[] tokens = http_msg_header.split("  ");
-                                    
-                                    byte[] request;
-                                    byte[] response;
-                                    
-                                    String time = tokens[0];
-                                    HRR.setTimeString(time);
-                                    String host_ip = tokens[2];
-                                    HRR.setHostIP(host_ip.substring(1,host_ip.length()-3));
-                                                                              
-                                    String service = tokens[1]; // SERVICE = PROTOCOL, HOST , PORT 
-                                    try{
-                                        URL baseURL = new URL(service);
-                                        HRR.setUrl(baseURL);
-                                        String protocol = baseURL.getProtocol();
-                                        String host = baseURL.getHost();                                        
-                                        int port = baseURL.getPort();
-                                        IHttpService HttpService = new BurpHttpService(host,port,protocol);
-                                        HRR.setHttpService(HttpService);
-                                    }
-                                    catch(MalformedURLException ex){
-                                        ex.printStackTrace();
-                                        stderr.println("[!] ERROR: MalformedURLException while processing a log entry header!");
-                                    }
-        
-                                    if (scanner.hasNext()){
-                                        //// PROCESS REQUEST ///////////////////////////////////////////////
-                                        String http_msg_request = scanner.next();
-                                        // dunno why http_msg_request comes with 2 extra bytes at the
-                                        // end: 0d0a; substring -2 delete the extra newline
-                                        request = helpers.stringToBytes(http_msg_request.substring(0,http_msg_request.length()-2));
-                                        HRR.setRequest(request);
-                                    }
-                                    if (scanner.hasNext()){
-                                        //// PROCESS RESPONSE //////////////////////////////////////////////
-                                        String http_msg_response = scanner.next();
-                                        // dunno why http_msg_response comes with 2 extra bytes at the
-                                        // end: 0d0a; substring -2 delete the extra newline
-                                        response = helpers.stringToBytes(http_msg_response.substring(0,http_msg_response.length()-2));
-                                        HRR.setResponse(response);
-                                    }
-                                    else{
-                                        response = helpers.stringToBytes("NO RESPONSE");
-                                        HRR.setResponse(response);
-                                    }
-                                    if (scanner.hasNext()){
-                                        // SCREAM ///////////////////////////////////////////////////////////
-                                        stderr.println("[!] Something went wrong! Log entry with too many pieces!");
-                                    }
-                                    scanner.close();    
-                                    dataModel.update(HRR);
-                                    n++;
-                                }
-                                sc.close();
-                            }catch (IOException exc) {
-                                exc.printStackTrace();
-                                stderr.println("[!] ERROR reading selected file!");
-                            }
+							final File logfile = fileDialog.getSelectedFile();
+
+
+							BurpLogParser myLittleParser = new BurpLogParser(logfile,callbacks,dataModel);
+							new Thread(myLittleParser).start();
+							callbacks.registerExtensionStateListener(myLittleParser);
+
                         }
                         else {
                             stderr.println("[!] WARNING OpenDialog cancelled!");           
@@ -253,56 +177,5 @@ public class BurpExtender implements IBurpExtender, ITab, IMessageEditorControll
         }  
     }
 
-    //
-    // extend AbstractTableModel to draw the log table
-    //    
-    public class LogTableModel extends AbstractTableModel { 
-        
-        public LogTableModel(){
-            super();
-        }
-        
-        @Override
-        public int getColumnCount(){ return 4; } 
-        
-        @Override
-        public int getRowCount(){ return messages.size();} 
-        
-        @Override
-        public Object getValueAt(int row,int col){
-            switch (col){
-                case 0:
-                    return row;
-                case 1:
-                    return messages.get(row).getTimeString();
-                case 2:
-                    return messages.get(row).getProtocol()+"://"+messages.get(row).getHost();
-                case 3:
-                    return messages.get(row).getHostIP();
-                default:
-                    return "";
-            } 
-        }    
-        
-        @Override
-        public String getColumnName(int columnIndex){
-            switch(columnIndex){
-                case 0:
-                    return "#";
-                case 1:
-                    return "Time";
-                case 2:
-                    return "Host";
-                case 3:
-                    return "IP";
-                default:
-                    return "";
-            }
-        } 
-        
-        public void update(BurpHttpMessage m){
-            messages.add(m);
-            fireTableRowsInserted(1,1);
-        } 
-    } 
+ 
 }//end BurpExtender
