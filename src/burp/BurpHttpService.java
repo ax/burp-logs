@@ -3,6 +3,7 @@ package burp;
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Implement IHttpService (the Burp's interface to provide PROTOCOL HOST PORT) 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 public class BurpHttpService implements IHttpService{
     private String host;
     private int port;
