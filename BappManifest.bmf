@@ -1,7 +1,7 @@
 Uuid: 1edf849a4df447158c04141e9a4e67db
 ExtensionType: 1
 Name: Log Viewer
-RepoName: log-viewer/
+RepoName: log-viewer
 ScreenVersion: 1.1
 SerialVersion: 1
 MinPlatformVersion: 0
