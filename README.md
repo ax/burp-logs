@@ -15,7 +15,10 @@ Under Project Options > Misc > Logging, there are options to log every HTTP requ
 
 ## Building instructions
 - Clone the repo.
-- Make a couple of dirs: `mkdir bin build`
-- Build the Logs jar: `javac -d build/ src/burp/*.java; jar cf bin/Logs.jar -C build/ burp`
-- Load your `bin/Logs.jar` into Burp.
+- Using Gradle, run the following:
+```
+gradle build
+```
+- The resulting Jar file will be found at ./build/libs/log-viewer.jar
+- Load this Jar file into Burp Extender.
 
