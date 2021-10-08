@@ -36,8 +36,8 @@ public class BurpExtender implements IBurpExtender, ITab, IMessageEditorControll
     
     private final JPanel borderPanel = new JPanel();
     private final ArrayList<BurpHttpMessage> messages = new ArrayList<>();
-	private static final String name = "Logs";
-	private static final String version = "0.0";
+	private static final String name = "Log Viewer";  //Original name was Logs.
+	private static final String version = "2.0";
 
     
     //
@@ -63,20 +63,19 @@ public class BurpExtender implements IBurpExtender, ITab, IMessageEditorControll
             @Override
             public void run(){
                 final LogTableModel dataModel = new LogTableModel(messages);
-
-                JButton loadButton = new JButton("Load ...");
-                loadButton.setPreferredSize(new Dimension(100, 30));
                 final JFileChooser  fileDialog = new JFileChooser();
-                loadButton.addActionListener( new ActionListener(){  
+
+                //load files that were saved using "Project options > Misc > Logging"
+		JButton loadMiscLogsButton = new JButton("Load Project Misc Logs");
+                loadMiscLogsButton.addActionListener( new ActionListener(){  
                     public void actionPerformed(ActionEvent e) {
                         int returnVal = fileDialog.showOpenDialog(borderPanel);
                         if (returnVal == JFileChooser.APPROVE_OPTION) {
-							final File logfile = fileDialog.getSelectedFile();
+				final File logfile = fileDialog.getSelectedFile();
 
-
-							BurpLogParser myLittleParser = new BurpLogParser(logfile,callbacks,dataModel);
-							new Thread(myLittleParser).start();
-							callbacks.registerExtensionStateListener(myLittleParser);
+				BurpLogParser miscLogParser = new BurpLogParser(logfile,callbacks,dataModel);
+				new Thread(miscLogParser).start();
+				callbacks.registerExtensionStateListener(miscLogParser);
 
                         }
                         else {
@@ -84,10 +83,33 @@ public class BurpExtender implements IBurpExtender, ITab, IMessageEditorControll
                         }
                     }
                 });
-                
+
+
+                //load files that were saved using "Saved Items"
+		JButton loadSavedItemsButton = new JButton("Load Saved Items");
+                loadSavedItemsButton.addActionListener( new ActionListener(){  
+                    public void actionPerformed(ActionEvent e) {
+                        int returnVal = fileDialog.showOpenDialog(borderPanel);
+                        if (returnVal == JFileChooser.APPROVE_OPTION) {
+				final File logfile = fileDialog.getSelectedFile();
+
+				BurpSavedItemsParser savedItemsParser = new BurpSavedItemsParser(logfile,callbacks,dataModel);
+				new Thread(savedItemsParser).start();
+				callbacks.registerExtensionStateListener(savedItemsParser);
+
+
+                        }
+                        else {
+                            stderr.println("[!] WARNING OpenDialog cancelled!");           
+                        }
+                    }
+                });
+
+
                 // Load button in a Flow Layout
                 JPanel flowPanel = new JPanel(new FlowLayout());
-                flowPanel.add(loadButton);
+                flowPanel.add(loadMiscLogsButton);
+                flowPanel.add(loadSavedItemsButton);
                 
                // Vertical JSplitPane with log table and tabs 
                 JSplitPane verSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
@@ -114,7 +136,8 @@ public class BurpExtender implements IBurpExtender, ITab, IMessageEditorControll
                 callbacks.customizeUiComponent(tabs);
                 callbacks.customizeUiComponent(flowPanel);
                 callbacks.customizeUiComponent(verSplitPane);
-                callbacks.customizeUiComponent(loadButton);
+                callbacks.customizeUiComponent(loadMiscLogsButton);
+                callbacks.customizeUiComponent(loadSavedItemsButton);
                 callbacks.customizeUiComponent(borderPanel);
 
                 // add the custom tab to Burp's UI
@@ -129,7 +152,7 @@ public class BurpExtender implements IBurpExtender, ITab, IMessageEditorControll
     //
     @Override
     public String getTabCaption(){
-        return "Logs";
+        return BurpExtender.name;
     }
 
     @Override

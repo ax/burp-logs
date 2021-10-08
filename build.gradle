@@ -10,6 +10,9 @@ repositories {
 
 dependencies {
     implementation 'net.portswigger.burp.extender:burp-extender-api:1.7.22'
+
+    implementation 'org.jdom:jdom2:2.0.6'
+    implementation 'jakarta.xml.bind:jakarta.xml.bind-api:3.0.0'
 }
 
 sourceSets {
