@@ -14,7 +14,7 @@ Requests found in Proxy History and etc can be saved via "Save item" Burp functi
 
 ### Versions
 
-Logs (Ax) / Log Viewer 1.0 (PortSwigger)
+Logs (Ax) / Log Viewer 1.1 (PortSwigger)
 - A tab within the main Burp UI.
 - A log table and two instances of Burp's own HTTP message editor, which display the selected request and response (as in the Proxy history).
 - Right-clicking the message editor produces the classic Burp's context menu used to perform actions like sending the message to other Burp tools, request/show in browser, copy as curl command, etc.
