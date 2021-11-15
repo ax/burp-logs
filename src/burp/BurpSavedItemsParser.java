@@ -66,6 +66,7 @@ public class BurpSavedItemsParser extends BurpLogParser {
 			  String port = item_element.getElementsByTagName("port").item(0).getTextContent();
 			  String request = item_element.getElementsByTagName("request").item(0).getTextContent();
 			  String response = item_element.getElementsByTagName("response").item(0).getTextContent();
+			  String comment = item_element.getElementsByTagName("comment").item(0).getTextContent();
 		
 			  /*
 			  System.out.println("time: " + time); 
@@ -78,6 +79,7 @@ public class BurpSavedItemsParser extends BurpLogParser {
 			  System.out.println(request);
 			  System.out.println("==== RESPONSE ====: ");
 			  System.out.println(response);
+			  System.out.println("==== Comments ====:\n" + comment);
 			  */
 			  
 		  	  BurpHttpMessage HRR = new BurpHttpMessage(); 
@@ -89,6 +91,9 @@ public class BurpSavedItemsParser extends BurpLogParser {
 			  HRR.setHttpService(HttpService);
 		 	  HRR.setRequest(helpers.base64Decode(request));
 			  HRR.setResponse(helpers.base64Decode(response));
+
+			  HRR.setComment(comment);
+
 		  	  dataModel.update(HRR);
 
 		      }
